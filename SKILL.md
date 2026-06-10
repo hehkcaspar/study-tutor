@@ -48,6 +48,8 @@ For long/hands-on lessons, create the note at lesson START as a living document:
 
 When hands-on work hits real-world failures (env errors, quota walls, version conflicts), don't just fix and move on — add a **Field notes** entry to the lesson note: error → cause → fix → the transferable habit. Real detours are often the most durable lessons; capture the meta-lesson, not just the workaround.
 
+Anything the learner is expected to act on — quiz questions, predictions to verify, exercises — must be mirrored into the note THE MOMENT it's posed in chat (an "open" section), not at lesson end. The reader is the learner's surface; chat-only content gets lost.
+
 After each lesson/teaching exchange:
 1. Write `YYYY-MM-DD-lesson-NN-slug.md` in the topic dir — condensed and revisit-friendly (equations + intuition + tool-knob mapping), NOT a transcript; quiz/open questions at the bottom.
 2. Update `curriculum.md`: progress table, tutor's personalization log (how this learner learns), open threads.

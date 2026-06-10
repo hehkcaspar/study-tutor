@@ -22,7 +22,7 @@ lsof -ti "tcp:$PORT" | xargs kill 2>/dev/null
 sleep 0.3
 python3 "$ENGINE/serve.py" --dir "$TOPIC" "$PORT" &
 SERVER=$!
-trap 'kill $SERVER 2>/dev/null' EXIT
+trap 'kill $SERVER 2>/dev/null; echo "👋 study session ended — if this lesson used cloud resources (GPU VMs etc.), make sure they are DELETED, not just stopped."' EXIT
 sleep 0.5
 URL="http://127.0.0.1:$PORT"
 echo "📚 reader: $URL   topic: $TOPIC"

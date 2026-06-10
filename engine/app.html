@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study Notes</title>
+<link rel="stylesheet" href="assets/github-markdown.css">
+<link rel="stylesheet" href="assets/katex/katex.min.css">
+<style>
+:root{
+  --bg:#fff; --fg:#1f2328; --muted:#656d76; --border:#d1d9e0; --side:#f6f8fa; --accent:#0969da;
+  --flag:rgba(255,166,0,.40); --q:rgba(84,174,255,.40); --ans:rgba(63,185,80,.35);
+}
+@media (prefers-color-scheme: dark){
+  :root{ --bg:#0d1117; --fg:#f0f6fc; --muted:#9198a1; --border:#3d444d; --side:#151b23; --accent:#4493f8;
+         --flag:rgba(210,153,34,.45); --q:rgba(31,111,235,.50); --ans:rgba(46,160,67,.45); }
+}
+*{box-sizing:border-box}
+html{--panel-w:340px;}
+body{margin:0;background:var(--bg);color:var(--fg);font:14px -apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+     display:grid;grid-template-columns:250px 1fr var(--panel-w);height:100vh;}
+body.navfold{grid-template-columns:0 1fr var(--panel-w);}
+body.navfold nav{display:none;}
+body.resizing{user-select:none;cursor:col-resize;}
+nav,aside{background:var(--side);overflow-y:auto;padding:14px;}
+nav{grid-column:1;border-right:1px solid var(--border);display:flex;flex-direction:column;min-width:0;}
+main{grid-column:2;overflow-y:auto;}
+aside{grid-column:3;padding:0;overflow:hidden;display:flex;}
+#navhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px;}
+#topictitle{font-weight:600;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#navhead button,#navopen{border:1px solid var(--border);background:var(--side);color:var(--muted);border-radius:6px;cursor:pointer;font:12px inherit;padding:3px 8px;flex:none;}
+#navhead button:hover,#navopen:hover{color:var(--fg);}
+#navopen{position:fixed;top:10px;left:10px;z-index:20;display:none;}
+body.navfold #navopen{display:block;}
+#panelgrip{flex:none;width:6px;cursor:col-resize;}
+#panelgrip:hover,body.resizing #panelgrip{background:var(--accent);}
+#panel{flex:1;overflow-y:auto;padding:14px;}
+#notelist{flex:1;overflow-y:auto;}
+.markdown-body{max-width:860px;margin:0 auto;padding:40px;}
+.markdown-body pre.mermaid{background:transparent;text-align:center;}
+.markdown-body .katex{font-size:1.06em;}
+h3.side{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:14px 0 6px;}
+.note-link{display:block;padding:6px 8px;border-radius:6px;color:var(--fg);text-decoration:none;margin-bottom:2px;line-height:1.35;font-size:13px;}
+.note-link:hover{background:rgba(128,128,128,.12);}
+.note-link.active{background:var(--accent);color:#fff;}
+.badge{display:inline-block;min-width:17px;text-align:center;border-radius:9px;font-size:11px;padding:1px 5px;margin-left:4px;}
+.badge.open{background:#d29922;color:#fff;}
+.badge.ans{background:#2ea043;color:#fff;}
+::highlight(ann-flag){background:var(--flag);}
+::highlight(ann-question){background:var(--q);}
+::highlight(ann-answered){background:var(--ans);}
+::highlight(ann-active){background:var(--accent);color:#fff;}
+#seltool{position:fixed;z-index:10;background:var(--side);border:1px solid var(--border);border-radius:8px;
+         box-shadow:0 4px 14px rgba(0,0,0,.3);padding:4px;display:none;align-items:center;gap:2px;}
+#seltool button{border:0;background:none;color:var(--fg);font:13px inherit;padding:5px 9px;border-radius:6px;cursor:pointer;white-space:nowrap;}
+#seltool button:hover{background:rgba(128,128,128,.18);}
+#seltool input{width:250px;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:6px;padding:5px 8px;font:13px inherit;outline:none;}
+.ann{border:1px solid var(--border);border-radius:8px;padding:9px 10px;margin-bottom:9px;background:var(--bg);cursor:pointer;}
+.ann.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+.ann .quote{color:var(--muted);font-style:italic;border-left:3px solid var(--border);padding-left:7px;margin:5px 0;display:block;word-break:break-word;font-size:12px;}
+.ann .meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.ann .comment{margin:4px 0;font-size:13px;}
+.ann .comment.followup{border-left:3px solid var(--accent);padding-left:7px;margin-top:6px;}
+.ann .answer{border-top:1px dashed var(--border);margin-top:6px;padding-top:6px;}
+.ann .answer .markdown-body{padding:0;font-size:13px;background:transparent;max-width:none;}
+.ann .replybox input{width:100%;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:6px;padding:5px 8px;font:12px inherit;outline:none;margin-top:7px;}
+.ann .replybox input:focus{border-color:var(--accent);}
+.ann .actions{margin-top:7px;display:flex;gap:6px;}
+.ann .actions button{font-size:11px;border:1px solid var(--border);background:none;color:var(--fg);border-radius:6px;padding:2px 8px;cursor:pointer;}
+.ann .actions button:hover{background:rgba(128,128,128,.12);}
+.pill{font-size:10px;border-radius:8px;padding:1px 7px;color:#fff;}
+.pill.open{background:#d29922}.pill.answered{background:#2ea043}.pill.resolved{background:var(--muted)}
+.empty{color:var(--muted);font-size:13px;line-height:1.5;}
+details.resolved-group summary{color:var(--muted);cursor:pointer;font-size:12px;margin:8px 0;}
+#scanctl{border-top:1px solid var(--border);padding-top:10px;margin-top:8px;font-size:12px;color:var(--muted);}
+#scanctl input{width:44px;border:1px solid var(--border);background:var(--bg);color:var(--fg);border-radius:6px;padding:3px 5px;font:12px inherit;outline:none;text-align:center;}
+#scanctl input:focus{border-color:var(--accent);}
+</style>
+</head>
+<body>
+<nav id="sidebar">
+<div id="navhead"><span id="topictitle"></span><button id="navfold-btn" title="Collapse sidebar">⟨ hide</button></div>
+<div id="notelist"></div>
+<div id="scanctl" title="How often the tutor watcher scans for new questions (5–30s)">⏱ tutor scan every <input id="scansec" type="number" min="5" max="30" step="1"> s</div>
+</nav>
+<button id="navopen" title="Show sidebar">☰</button>
+<main id="main"><article class="markdown-body" id="content"><p class="empty">Loading…</p></article></main>
+<aside><div id="panelgrip" title="Drag to resize"></div><div id="panel"></div></aside>
+<div id="seltool"></div>
+<script src="assets/marked.min.js"></script>
+<script src="assets/katex/katex.min.js"></script>
+<script src="assets/mermaid.min.js"></script>
+<script>
+/* ---------- math ($..$ inline, $$..$$ block, \$ escape) via marked + KaTeX ---------- */
+marked.use({ extensions: [
+  { name: 'blockMath', level: 'block',
+    start(src) { return src.indexOf('$$'); },
+    tokenizer(src) {
+      const m = /^\$\$([\s\S]+?)\$\$/.exec(src);
+      if (m) return { type: 'blockMath', raw: m[0], tex: m[1].trim() };
+    },
+    renderer(t) { return `<p style="text-align:center">${katex.renderToString(t.tex, { throwOnError: false, displayMode: true })}</p>`; } },
+  { name: 'escapedDollar', level: 'inline',
+    start(src) { return src.indexOf('\\$'); },
+    tokenizer(src) {
+      const m = /^\\\$/.exec(src);
+      if (m) return { type: 'escapedDollar', raw: m[0] };
+    },
+    renderer() { return '$'; } },
+  { name: 'inlineMath', level: 'inline',
+    start(src) { return src.indexOf('$'); },
+    tokenizer(src) {
+      // closing $ must not be followed by a digit, so "$5 and $10" stays prose
+      const m = /^\$(?!\s)([^$\n]*[^\s$])\$(?!\d)/.exec(src);
+      if (m) return { type: 'inlineMath', raw: m[0], tex: m[1] };
+    },
+    renderer(t) { return katex.renderToString(t.tex, { throwOnError: false }); } },
+]});
+
+/* ---------- mermaid: ```mermaid fences -> diagrams, theme follows OS ---------- */
+function mermaidTheme() {
+  return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'default';
+}
+mermaid.initialize({ startOnLoad: false, theme: mermaidTheme() });
+async function renderMermaid(root) {
+  root.querySelectorAll('code.language-mermaid').forEach(c => {
+    const d = document.createElement('pre');
+    d.className = 'mermaid';
+    d.textContent = c.textContent;
+    c.parentElement.replaceWith(d);
+  });
+  const nodes = root.querySelectorAll('.mermaid:not([data-processed])');
+  if (nodes.length) { try { await mermaid.run({ nodes }); } catch (e) { console.warn('mermaid:', e); } }
+}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  mermaid.initialize({ startOnLoad: false, theme: mermaidTheme() });
+  if (current) openNote(current);
+});
+</script>
+<script>
+const $ = s => document.querySelector(s);
+const content = $('#content'), panel = $('#panel'), seltool = $('#seltool');
+let notesList = [], anns = [], current = null, ranges = [], tn = null, activeId = null, pending = null;
+let openSeq = 0, noteMtimes = {}, lastAnnTag = null, lastNotesTag = null;
+
+async function api(p, opts = {}) {
+  try {
+    const r = await fetch(p, { headers: { 'Content-Type': 'application/json' }, ...opts });
+    if (!r.ok) { console.warn('api', p, r.status, await r.text().catch(() => '')); return null; }
+    return await r.json();
+  } catch (e) { console.warn('api', p, e); return null; }
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const trunc = (s, n) => s.length > n ? s.slice(0, n) + '…' : s;
+
+/* ---------- sidebar ---------- */
+function groupNotes() {
+  const cur = notesList.find(n => n.file === 'curriculum.md');
+  const lessons = notesList.filter(n => /^\d{4}-/.test(n.file)).sort((a, b) => b.file.localeCompare(a.file));
+  const rest = notesList.filter(n => n !== cur && !lessons.includes(n));
+  return { cur, lessons, rest };
+}
+function renderSidebar() {
+  const { cur, lessons, rest } = groupNotes();
+  const link = n => `<a class="note-link ${n.file === current ? 'active' : ''}" href="#" data-f="${esc(n.file)}">${esc(n.title)}` +
+    (n.open ? `<span class="badge open">${n.open}</span>` : '') +
+    (n.answered ? `<span class="badge ans">${n.answered}</span>` : '') + `</a>`;
+  let h = '';
+  if (cur) h += '<h3 class="side">Pinned</h3>' + link(cur);
+  h += '<h3 class="side">Lessons</h3>' + (lessons.map(link).join('') || '<div class="empty">none yet</div>');
+  if (rest.length) h += '<h3 class="side">Other</h3>' + rest.map(link).join('');
+  const notelist = $('#notelist');
+  notelist.innerHTML = h;
+  notelist.querySelectorAll('a').forEach(a => a.onclick = e => { e.preventDefault(); openNote(a.dataset.f); });
+}
+/* returns true when the currently open note's file changed on disk */
+async function refreshNotes() {
+  const list = await api('/api/notes');
+  if (!list) return false;
+  notesList = list;
+  const newM = {};
+  list.forEach(n => { newM[n.file] = n.mtime; });
+  const changed = !!(current && noteMtimes[current] !== undefined && newM[current] !== undefined
+                     && newM[current] !== noteMtimes[current]);
+  noteMtimes = newM;
+  renderSidebar();
+  return changed;
+}
+
+/* ---------- note rendering & text anchoring ---------- */
+async function openNote(f) {
+  const seq = ++openSeq;
+  current = f; activeId = null;
+  let md;
+  try { md = await (await fetch('/' + encodeURIComponent(f) + '?t=' + Date.now())).text(); }
+  catch (e) { console.warn('openNote', e); return; }
+  if (seq !== openSeq) return; // a newer openNote superseded this one
+  content.innerHTML = marked.parse(md);
+  await renderMermaid(content); // before cacheText: anchors must match the final DOM
+  if (seq !== openSeq) return;
+  cacheText();
+  await refreshAnns();
+  renderSidebar();
+  $('#main').scrollTop = 0;
+}
+function showEmptyState() {
+  content.innerHTML = `<h1>No notes yet</h1><p class="empty">This topic folder has no markdown notes.
+    Add <code>*.md</code> files here, or ask your tutor for lesson 1 — the sidebar updates automatically.</p>`;
+}
+function cacheText() {
+  const w = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  const nodes = [], offs = []; let off = 0, n;
+  while (n = w.nextNode()) { nodes.push(n); offs.push(off); off += n.data.length; }
+  tn = { nodes, offs, full: content.textContent };
+}
+function posAt(off) {
+  const { nodes, offs } = tn;
+  for (let i = 0; i < nodes.length; i++) {
+    const L = nodes[i].data.length;
+    if (off < offs[i] + L || (i === nodes.length - 1 && off <= offs[i] + L))
+      return [nodes[i], Math.min(L, Math.max(0, off - offs[i]))];
+  }
+  const last = nodes[nodes.length - 1];
+  return [last, last.data.length];
+}
+function rangeFromOffsets(s, e) {
+  const r = document.createRange();
+  const [sn, so] = posAt(s), [en, eo] = posAt(e);
+  r.setStart(sn, so); r.setEnd(en, eo);
+  return r;
+}
+function nthIndex(hay, needle, n) {
+  let i = -1;
+  for (let k = 0; k <= n; k++) { i = hay.indexOf(needle, i + 1); if (i < 0) return -1; }
+  return i;
+}
+function globalOffset(node, offset) {
+  if (node.nodeType === 3) { const i = tn.nodes.indexOf(node); return i < 0 ? 0 : tn.offs[i] + offset; }
+  const probe = document.createRange();
+  probe.setStart(content, 0);
+  try { probe.setEnd(node, offset); } catch (_) { return 0; }
+  let total = 0;
+  for (let i = 0; i < tn.nodes.length; i++) {
+    const nr = document.createRange(); nr.selectNodeContents(tn.nodes[i]);
+    if (probe.compareBoundaryPoints(Range.END_TO_END, nr) >= 0) total += tn.nodes[i].data.length;
+    else break;
+  }
+  return total;
+}
+
+/* ---------- annotations ---------- */
+async function refreshAnns() {
+  const all = await api('/api/annotations');
+  if (!all) return;
+  anns = all.filter(a => a.file === current);
+  if (tn) buildRanges();
+  paint(); renderPanel();
+}
+function buildRanges() {
+  ranges = [];
+  for (const a of anns) {
+    if (a.status === 'resolved' || !a.text) { a._stale = false; continue; }
+    // anchor: try stored occurrence, then disambiguate by stored prefix, else mark stale
+    let s = nthIndex(tn.full, a.text, a.occurrence ?? 0);
+    if (s < 0 && a.prefix) {
+      let i = tn.full.indexOf(a.text);
+      while (i >= 0) {
+        if (tn.full.slice(Math.max(0, i - a.prefix.length), i).endsWith(a.prefix.slice(-20))) { s = i; break; }
+        i = tn.full.indexOf(a.text, i + 1);
+      }
+    }
+    if (s < 0) s = tn.full.indexOf(a.text);
+    a._stale = s < 0;
+    if (s < 0) continue;
+    ranges.push({ ann: a, range: rangeFromOffsets(s, s + a.text.length) });
+  }
+}
+function paint() {
+  if (!('highlights' in CSS)) return;
+  const f = new Highlight(), q = new Highlight(), ans = new Highlight(), act = new Highlight();
+  for (const { ann, range } of ranges) {
+    if (ann.id === activeId) { act.add(range); continue; }
+    if (ann.status === 'answered') ans.add(range);
+    else if (ann.type === 'flag') f.add(range);
+    else q.add(range);
+  }
+  CSS.highlights.set('ann-flag', f);
+  CSS.highlights.set('ann-question', q);
+  CSS.highlights.set('ann-answered', ans);
+  CSS.highlights.set('ann-active', act);
+}
+function pill(s) { return `<span class="pill ${s}">${s}</span>`; }
+function annHtml(a) {
+  const icon = a.type === 'flag' ? '❓' : '💬';
+  const thread = (a.thread || []).map(m => m.role === 'tutor'
+    ? `<div class="answer"><div class="markdown-body">${marked.parse(m.text)}</div></div>`
+    : `<div class="comment followup">↳ ${esc(m.text)}</div>`).join('');
+  const waiting = a.status === 'open' ? `<div class="empty">⏳ tutor will pick this up…</div>` : '';
+  const stale = a._stale ? `<div class="empty">⚠️ the note changed — this quote no longer matches the text</div>` : '';
+  return `<div class="ann ${a.id === activeId ? 'active' : ''}" data-id="${a.id}">
+    <div class="meta">${icon} <span>${a.created}</span> ${pill(a.status)}</div>
+    <span class="quote">${esc(trunc(a.text, 160))}</span>${stale}
+    ${a.comment ? `<div class="comment">${esc(a.comment)}</div>` : ''}
+    ${a.answer ? `<div class="answer"><div class="markdown-body">${marked.parse(a.answer)}</div></div>` : ''}
+    ${thread}${waiting}
+    <div class="replybox"><input placeholder="Follow up… (Enter to send)" data-id="${a.id}"></div>
+    <div class="actions">
+      ${a.status !== 'resolved'
+        ? `<button data-act="resolve">✓ got it — resolve</button>`
+        : `<button data-act="reopen">reopen</button>`}
+      <button data-act="del">delete</button>
+    </div></div>`;
+}
+function renderPanel() {
+  const scrollPos = panel.scrollTop;
+  const resolvedOpen = panel.querySelector('details.resolved-group')?.open ?? false;
+  const live = anns.filter(a => a.status !== 'resolved');
+  const res = anns.filter(a => a.status === 'resolved');
+  let h = `<h3 class="side">Annotations — this note</h3>`;
+  h += live.length ? live.map(annHtml).join('')
+    : `<div class="empty">Select any text in the note, then hit <b>❓ Don’t get it</b> or <b>💬 Ask</b>.<br><br>Your tutor checks these and writes answers back here.</div>`;
+  if (res.length) h += `<details class="resolved-group"${resolvedOpen ? ' open' : ''}><summary>${res.length} resolved</summary>${res.map(annHtml).join('')}</details>`;
+  panel.innerHTML = h;
+  panel.querySelectorAll('.ann').forEach(el => {
+    el.onclick = e => { if (e.target.dataset.act) return; setActive(el.dataset.id, true); };
+    el.querySelectorAll('button').forEach(b => b.onclick = async e => {
+      e.stopPropagation();
+      const id = el.dataset.id, act = b.dataset.act;
+      if (act === 'del') {
+        if (!confirm('Delete this annotation?')) return;
+        await api('/api/annotations/' + id, { method: 'POST', body: JSON.stringify({ delete: true }) });
+      }
+      if (act === 'resolve') await api('/api/annotations/' + id, { method: 'POST', body: JSON.stringify({ status: 'resolved' }) });
+      if (act === 'reopen') await api('/api/annotations/' + id, { method: 'POST', body: JSON.stringify({ status: 'open' }) });
+      await refreshAnns(); await refreshNotes();
+    });
+  });
+  renderMermaid(panel);
+  panel.querySelectorAll('.replybox input').forEach(inp => {
+    inp.onclick = e => e.stopPropagation();
+    inp.onkeydown = async ev => {
+      if (ev.key === 'Enter' && inp.value.trim()) {
+        await api('/api/annotations/' + inp.dataset.id,
+          { method: 'POST', body: JSON.stringify({ reply: { role: 'learner', text: inp.value.trim() } }) });
+        await refreshAnns(); await refreshNotes();
+      }
+    };
+  });
+  panel.scrollTop = scrollPos;
+}
+function setActive(id, scrollDoc) {
+  activeId = id; paint();
+  panel.querySelectorAll('.ann').forEach(el => el.classList.toggle('active', el.dataset.id === id));
+  if (scrollDoc) {
+    const r = ranges.find(x => x.ann.id === id);
+    if (r) r.range.startContainer.parentElement?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }
+}
+
+/* click a highlight in the text -> focus its card in the panel */
+content.addEventListener('click', e => {
+  let pos = null;
+  if (document.caretRangeFromPoint) pos = document.caretRangeFromPoint(e.clientX, e.clientY);
+  else if (document.caretPositionFromPoint) {
+    const p = document.caretPositionFromPoint(e.clientX, e.clientY);
+    if (p) { pos = document.createRange(); pos.setStart(p.offsetNode, p.offset); }
+  }
+  if (!pos) return;
+  for (const { ann, range } of ranges) {
+    try {
+      if (range.comparePoint(pos.startContainer, pos.startOffset) === 0) {
+        setActive(ann.id, false);
+        panel.querySelector(`.ann[data-id="${ann.id}"]`)?.scrollIntoView({ block: 'nearest' });
+        return;
+      }
+    } catch (_) {}
+  }
+});
+
+/* ---------- selection toolbar ---------- */
+document.addEventListener('mouseup', e => {
+  if (seltool.contains(e.target)) return;
+  setTimeout(() => {
+    if (!tn) { hideTool(); return; } // no note loaded yet
+    const sel = window.getSelection();
+    if (!sel || sel.isCollapsed || !sel.rangeCount) { hideTool(); return; }
+    const r = sel.getRangeAt(0);
+    if (!content.contains(r.commonAncestorContainer)) { hideTool(); return; }
+    const s = globalOffset(r.startContainer, r.startOffset);
+    const en = globalOffset(r.endContainer, r.endOffset);
+    if (en <= s) { hideTool(); return; }
+    const text = tn.full.slice(s, en);
+    if (!text.trim()) { hideTool(); return; }
+    let occ = 0, i = tn.full.indexOf(text);
+    while (i >= 0 && i < s) { occ++; i = tn.full.indexOf(text, i + 1); }
+    pending = {
+      file: current, text, occurrence: occ,
+      prefix: tn.full.slice(Math.max(0, s - 60), s),
+      suffix: tn.full.slice(en, en + 60),
+    };
+    showTool(r.getBoundingClientRect());
+  }, 0);
+});
+function showTool(rect) {
+  seltool.innerHTML = `<button id="bflag">❓ Don’t get it</button><button id="bask">💬 Ask</button>`;
+  seltool.style.display = 'flex';
+  seltool.style.top = Math.max(8, rect.top - 44) + 'px';
+  seltool.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 320)) + 'px';
+  $('#bflag').onclick = () => submitAnn('flag', '');
+  $('#bask').onclick = () => {
+    seltool.innerHTML = `<input id="qin" placeholder="Your question… (Enter to send)"><button id="qgo">Send</button>`;
+    const inp = $('#qin'); inp.focus();
+    inp.onkeydown = ev => {
+      if (ev.key === 'Enter' && inp.value.trim()) submitAnn('question', inp.value);
+      if (ev.key === 'Escape') hideTool();
+    };
+    $('#qgo').onclick = () => { if (inp.value.trim()) submitAnn('question', inp.value); };
+  };
+}
+function hideTool() { seltool.style.display = 'none'; pending = null; }
+async function submitAnn(type, comment) {
+  if (!pending) return;
+  await api('/api/annotations', { method: 'POST', body: JSON.stringify({ ...pending, type, comment }) });
+  window.getSelection().removeAllRanges();
+  hideTool();
+  await refreshAnns(); await refreshNotes();
+}
+$('#main').addEventListener('scroll', hideTool);
+
+/* ---------- scan-interval setting ---------- */
+const scansec = $('#scansec');
+scansec.onchange = async () => {
+  const v = Math.min(30, Math.max(5, parseInt(scansec.value) || 10));
+  const s = await api('/api/settings', { method: 'POST', body: JSON.stringify({ scanInterval: v }) });
+  if (s) scansec.value = s.scanInterval;
+  scansec.blur();
+};
+
+/* ---------- layout: resizable panel + foldable sidebar ---------- */
+const savedW = parseInt(localStorage.getItem('panelW'));
+if (savedW) document.documentElement.style.setProperty('--panel-w', savedW + 'px');
+$('#panelgrip').onmousedown = e => {
+  e.preventDefault();
+  document.body.classList.add('resizing');
+  let w = null;
+  const move = ev => {
+    w = Math.min(700, Math.max(240, window.innerWidth - ev.clientX));
+    document.documentElement.style.setProperty('--panel-w', w + 'px');
+  };
+  const up = () => {
+    document.body.classList.remove('resizing');
+    if (w) localStorage.setItem('panelW', w);
+    document.removeEventListener('mousemove', move);
+    document.removeEventListener('mouseup', up);
+  };
+  document.addEventListener('mousemove', move);
+  document.addEventListener('mouseup', up);
+};
+function setNavFold(f) {
+  document.body.classList.toggle('navfold', f);
+  localStorage.setItem('navFold', f ? '1' : '0');
+}
+$('#navfold-btn').onclick = () => setNavFold(true);
+$('#navopen').onclick = () => setNavFold(false);
+if (localStorage.getItem('navFold') === '1') setNavFold(true);
+
+/* ---------- change-detecting poll ---------- */
+async function pollStatus() {
+  const st = await api('/api/status');
+  if (!st) return;
+  if (document.activeElement !== scansec) scansec.value = st.scanInterval;
+  const annChanged = st.annotations !== lastAnnTag;
+  const notesChanged = st.notes !== lastNotesTag;
+  lastAnnTag = st.annotations; lastNotesTag = st.notes;
+  if (annChanged) await refreshAnns();
+  if (annChanged || notesChanged) {
+    const currentFileChanged = await refreshNotes();
+    if (currentFileChanged) await openNote(current); // note edited on disk -> reload it
+    else if (notesChanged && !current && notesList.length) await openNote(notesList[0].file);
+  }
+}
+
+/* ---------- init ---------- */
+(async function () {
+  const cfg = await api('/api/config');
+  if (cfg) {
+    document.title = cfg.title || 'Study Notes';
+    $('#topictitle').textContent = cfg.title || cfg.topic || '';
+    $('#topictitle').title = cfg.title || '';
+  }
+  const st = await api('/api/status');
+  if (st) { lastAnnTag = st.annotations; lastNotesTag = st.notes; scansec.value = st.scanInterval; }
+  await refreshNotes();
+  const { cur, lessons } = groupNotes();
+  const first = lessons[0] || cur || notesList[0];
+  if (first) await openNote(first.file);
+  else showEmptyState();
+  setInterval(async () => {
+    if (seltool.style.display === 'flex') return;
+    if (document.activeElement && document.activeElement.tagName === 'INPUT') return; // don't wipe typing
+    await pollStatus();
+  }, 10000);
+})();
+</script>
+</body>
+</html>

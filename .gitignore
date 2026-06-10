@@ -2,3 +2,4 @@
 engine/topics.json
 **/.tutor_state.json
 .DS_Store
+**/.translations.json

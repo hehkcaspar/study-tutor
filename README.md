@@ -18,6 +18,7 @@ flowchart LR
 - **Annotate-to-ask** — highlight anything in a note, ask a question or flag it; answers appear in the margin panel, threaded, within ~30s.
 - **A tutor that remembers** — `curriculum.md` tracks your profile, progress, and what the tutor learns about how you learn.
 - **Two channels, one rule of thumb** — quick questions: select text in the reader. Lessons, exercises, anything that creates or changes files: ask in Claude Code chat (the reader's watcher is answer-only by design).
+- **中文 toggle** — lazy per-note translation to Simplified Chinese (the 中/EN button), done by your claude CLI, cached until the source note changes. Math, code, and diagrams stay intact.
 - **Multiple topics** — each topic is one folder with its own port; they run side by side.
 - Fully local: stdlib Python server, vendored assets (KaTeX, mermaid, marked), works offline except for answering questions.
 

@@ -17,6 +17,9 @@ API:
   POST /api/annotations/<id>      -> update {status|comment|answer|reply|delete};
                                      optional "ifStatus": precondition, 409 on mismatch
   POST /api/settings              -> merge settings (scanInterval clamped 5-30)
+  POST /api/translate             -> {file} -> Simplified-Chinese markdown of that
+                                     note via `claude -p`; cached in .translations.json
+                                     keyed by source hash (auto-invalidates on edit)
 
 Concurrency: this server is the single writer of annotations.json/settings.json
 (the tutor writes through this API). Mutations hold a process-wide lock and
@@ -27,6 +30,8 @@ import json
 import os
 import posixpath
 import re
+import shutil
+import subprocess
 import sys
 import threading
 import time
@@ -47,6 +52,22 @@ def ann_path():
 
 def settings_path():
     return TOPIC / "settings.json"
+
+
+def trans_path():
+    return TOPIC / ".translations.json"
+
+
+TRANSLATE_PROMPT = """Translate the following markdown study note into Simplified Chinese.
+PRESERVE EXACTLY, unchanged: markdown structure and heading levels, table layout
+(translate only the prose inside cells), fenced code blocks and inline code,
+LaTeX math ($...$ and $$...$$), mermaid blocks, URLs, file paths, and emoji.
+Keep standard ML/technical terms in English (e.g. LoRA, SFT, GRPO, KL, logits,
+checkpoint), adding a Chinese gloss in parentheses on first occurrence when helpful.
+Output ONLY the translated markdown — no preamble, no fences around the whole document.
+
+--- NOTE ---
+"""
 
 
 def read_json(path, default):
@@ -183,6 +204,31 @@ class Handler(SimpleHTTPRequestHandler):
 
     def handle_post(self):
         route = self.path.split("?", 1)[0]
+        if route == "/api/translate":
+            b = self.read_body()
+            fname = Path(b.get("file") or "").name
+            p = TOPIC / fname
+            if not fname.endswith(".md") or not p.exists():
+                return self.send_json({"error": f"unknown note: {fname!r}"}, 400)
+            src = p.read_text(encoding="utf-8")
+            h = hashlib.md5(src.encode()).hexdigest()[:16]
+            ent = read_json(trans_path(), {}).get(fname)
+            if ent and ent.get("hash") == h:
+                return self.send_json({"file": fname, "markdown": ent["zh"], "cached": True})
+            if not shutil.which("claude"):
+                return self.send_json({"error": "claude CLI not on PATH — cannot translate"}, 503)
+            out = subprocess.run(["claude", "-p", "--output-format", "text"],
+                                 input=TRANSLATE_PROMPT + src,
+                                 capture_output=True, text=True, timeout=300)
+            zh = out.stdout.strip()
+            if out.returncode != 0 or not zh:
+                return self.send_json(
+                    {"error": f"translation failed: {out.stderr.strip()[:200]}"}, 502)
+            with LOCK:
+                cache = read_json(trans_path(), {})
+                cache[fname] = {"hash": h, "zh": zh, "at": now_str()}
+                write_json(trans_path(), cache)
+            return self.send_json({"file": fname, "markdown": zh, "cached": False})
         if route == "/api/settings":
             b = self.read_body()
             with LOCK:

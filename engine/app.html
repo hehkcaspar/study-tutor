@@ -32,6 +32,8 @@ aside{grid-column:3;padding:0;overflow:hidden;display:flex;}
 #navhead button:hover,#navopen:hover{color:var(--fg);}
 #navopen{position:fixed;top:10px;left:10px;z-index:20;display:none;}
 body.navfold #navopen{display:block;}
+#langbtn{position:fixed;top:10px;right:calc(var(--panel-w) + 18px);z-index:20;border:1px solid var(--border);background:var(--side);color:var(--muted);border-radius:6px;cursor:pointer;font:12px inherit;padding:3px 9px;}
+#langbtn:hover{color:var(--fg);}
 #panelgrip{flex:none;width:6px;cursor:col-resize;}
 #panelgrip:hover,body.resizing #panelgrip{background:var(--accent);}
 #panel{flex:1;overflow-y:auto;padding:14px;}
@@ -84,6 +86,7 @@ details.resolved-group summary{color:var(--muted);cursor:pointer;font-size:12px;
 <div id="scanctl" title="How often the tutor watcher scans for new questions (5–30s)">⏱ tutor scan every <input id="scansec" type="number" min="5" max="30" step="1"> s</div>
 </nav>
 <button id="navopen" title="Show sidebar">☰</button>
+<button id="langbtn"></button>
 <main id="main"><article class="markdown-body" id="content"><p class="empty">Loading…</p></article></main>
 <aside><div id="panelgrip" title="Drag to resize"></div><div id="panel"></div></aside>
 <div id="seltool"></div>
@@ -195,6 +198,13 @@ async function openNote(f) {
   try { md = await (await fetch('/' + encodeURIComponent(f) + '?t=' + Date.now())).text(); }
   catch (e) { console.warn('openNote', e); return; }
   if (seq !== openSeq) return; // a newer openNote superseded this one
+  if (lang === 'zh') {
+    content.innerHTML = '<p class="empty">🌐 翻译中… first translation of a note takes ~1 min; cached afterwards.</p>';
+    const t = await api('/api/translate', { method: 'POST', body: JSON.stringify({ file: f }) });
+    if (seq !== openSeq) return;
+    if (t && t.markdown) md = t.markdown;
+    else console.warn('translation unavailable — showing English');
+  }
   content.innerHTML = marked.parse(md);
   await renderMermaid(content); // before cacheText: anchors must match the final DOM
   if (seq !== openSeq) return;
@@ -270,7 +280,7 @@ function buildRanges() {
       }
     }
     if (s < 0) s = tn.full.indexOf(a.text);
-    a._stale = s < 0;
+    a._stale = s < 0 && lang === 'en'; // anchors are per-language; only warn in the view they were made in
     if (s < 0) continue;
     ranges.push({ ann: a, range: rangeFromOffsets(s, s + a.text.length) });
   }
@@ -426,6 +436,21 @@ async function submitAnn(type, comment) {
   await refreshAnns(); await refreshNotes();
 }
 $('#main').addEventListener('scroll', hideTool);
+
+/* ---------- language toggle (lazy zh translation, server-cached) ---------- */
+let lang = localStorage.getItem('lang') === 'zh' ? 'zh' : 'en';
+const langbtn = $('#langbtn');
+function syncLangBtn() {
+  langbtn.textContent = lang === 'en' ? '中' : 'EN';
+  langbtn.title = lang === 'en' ? 'Translate this note to Chinese (中文)' : 'Switch back to English';
+}
+langbtn.onclick = async () => {
+  lang = lang === 'en' ? 'zh' : 'en';
+  localStorage.setItem('lang', lang);
+  syncLangBtn();
+  if (current) await openNote(current);
+};
+syncLangBtn();
 
 /* ---------- scan-interval setting ---------- */
 const scansec = $('#scansec');

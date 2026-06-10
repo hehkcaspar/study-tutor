@@ -46,6 +46,8 @@ The watcher answers open annotations via headless `claude -p` every 5–30s (con
 
 For long/hands-on lessons, create the note at lesson START as a living document: status "🔄 in progress", a milestone checklist, and the content distilled so far; update it at each milestone so the learner can read and annotate mid-lesson (the reader auto-reloads changed notes). Finalize at lesson end.
 
+When hands-on work hits real-world failures (env errors, quota walls, version conflicts), don't just fix and move on — add a **Field notes** entry to the lesson note: error → cause → fix → the transferable habit. Real detours are often the most durable lessons; capture the meta-lesson, not just the workaround.
+
 After each lesson/teaching exchange:
 1. Write `YYYY-MM-DD-lesson-NN-slug.md` in the topic dir — condensed and revisit-friendly (equations + intuition + tool-knob mapping), NOT a transcript; quiz/open questions at the bottom.
 2. Update `curriculum.md`: progress table, tutor's personalization log (how this learner learns), open threads.
